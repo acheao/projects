@@ -1,3 +1,6 @@
-1. ubuntu电脑运维openclaw
-2. ubuntu commit & push
-3. ubuntu 打包
+为AI注入多巴胺
+可接入各种模型的智能音箱
+游戏
+我的世界接入AI，用于导演电影
+CAD二次开发，接入AI画图
+谷歌插件
