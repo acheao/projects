@@ -1,317 +1,312 @@
-# 前端需求文档（Web App）
+# English Trainer Web
 
-**技术栈**：Vite + React + TypeScript + MUI  
-**项目目标**：提供素材管理、练习做题、批改展示、统计看板四大页面；通过 REST API 与后端交互。
+`english-trainer-web` 是 English Trainer 产品的前端仓库，负责把完整学习闭环呈现为可用的 Web 界面：
 
-## 1. 页面信息架构
+`注册 / 登录 -> 连接模型 API -> 导入材料 -> 开始 30 分钟日练 -> 查看反馈 -> 跟踪进度`
 
-### 1.1 路由
+## 项目定位
 
-- `/materials` 素材管理
-    
-- `/practice` 练习页（核心）
-    
-- `/stats` 统计页
-    
-- `/settings` 设置（MVP 可选：仅 LLM 配置展示/批次大小等）
-    
-- 默认首页跳转 `/practice`
-    
-
-### 1.2 全局布局
-
-- 左侧导航 Drawer（MUI）
-    
-- 顶部 AppBar：项目名 + 当前 session 状态（可选）
-    
-- 主区域：页面内容
-    
-- 全局提示：Snackbar（成功/失败）
-    
-
----
-
-## 2. 功能需求
-
-## 2.1 素材管理页 `/materials`
-
-### 2.1.1 导入素材
-
-- 支持多行文本粘贴：一行一条
-    
-- 导入参数：
-    
-    - `type`：auto / sentence / phrase / word（默认 auto）
-        
-    - `tags`：可选（逗号分隔）
-        
-- 导入后显示导入结果：成功条数、失败条数、失败原因（后端返回）
-    
-
-**组件**
-
-- `MaterialImportDialog`
-    
-    - TextField multiline
-        
-    - Select(type)
-        
-    - Tags input（可简化为 TextField）
-        
-    - Submit 按钮 + loading
-        
-
-### 2.1.2 列表管理
-
-- 表格列：
-    
-    - content（可折叠/tooltip）
-        
-    - type
-        
-    - tags
-        
-    - enabled（Switch）
-        
-    - createdAt
-        
-    - 操作：编辑（可选）、删除（可选）
-        
-- 搜索：关键字 query
-    
-- 过滤：enabled / type
-    
-
-**MVP 最少**：导入 + 列表 + enabled 开关 + 搜索
-
----
-
-## 2.2 练习页 `/practice`（核心）
-
-### 2.2.1 开始练习 / 生成一批题
-
-- 用户点击“开始练习”
-    
-- 弹出配置（可选，MVP 可默认）：
-    
-    - batchSize：5/10/20（默认10）
-        
-    - generatorMode：hybrid / llm / db_only（默认 hybrid）
-        
-- 请求后端创建 session 并返回 questions
-    
-
-**组件**
-
-- `StartSessionPanel`
-    
-- `SessionConfigDialog`（可选）
-    
-
-### 2.2.2 做题流程
-
-- 显示当前题目：
-    
-    - 题型 badge（rewrite/correct/translate/cloze/compose）
-        
-    - prompt（题面）
-        
-    - hint（可选）
-        
-    - 输入框（多行）
-        
-    - 提交按钮
-        
-- 提交后：
-    
-    - loading 状态
-        
-    - 展示批改结果卡片：
-        
-        - score
-            
-        - correctedAnswer
-            
-        - errorTypes chips
-            
-        - explanation（中文）
-            
-        - suggestions（列表）
-            
-- 导航：
-    
-    - 自动进入下一题（默认）
-        
-    - 提供“上一题/下一题”（可选）
-        
-- 一批结束：
-    
-    - 显示本批总结（平均分、错误类型 Top）
-        
-    - 按钮：进入下一批（调用 `/sessions/{id}/next`）
-        
-
-**组件**
-
-- `QuestionCard`
-    
-- `AnswerEditor`
-    
-- `GradingPanel`
-    
-- `BatchSummaryDialog`
-    
-
-### 2.2.3 状态与缓存
-
-- sessionId 保存在内存（可选 localStorage）
-    
-- 刷新页面：
-    
-    - MVP：提示“session 已丢失，重新开始”
-        
-    - V2：从后端恢复 session
-        
-
----
-
-## 2.3 统计页 `/stats`
-
-### 2.3.1 概览卡片（MVP）
-
-- 今日完成题数
-    
-- 今日平均分
-    
-- 今日正确率
-    
-- 到期复习数量（due count）
-    
-
-### 2.3.2 错误类型 Top（MVP）
-
-- Top5 error types（近7天/30天切换可选）
-    
-- 列表或条形图（MUI + 基础 chart 库可选；MVP 用列表）
-    
-
----
-
-## 2.4 错误处理与体验
-
-- 所有 API 错误统一拦截：
-    
-    - 401/403（若后续有登录）
-        
-    - 429（LLM 限流）提示“请求过多，请稍后重试”
-        
-    - 5xx 提示“服务异常”
-        
-- 提交答案时如果解析失败（后端返回 `rawText`）：前端展示 rawText 并提示“结构化解析失败”
-    
-
----
-
-## 3. 前端与后端接口契约（前端视角）
-
-> API Base：`/api`
-
-### 3.1 Materials
-
-- `POST /materials/import`
-    
-    - req: `{ type?: string, tags?: string[], lines: string[] }`
-        
-    - resp: `{ successCount: number, failCount: number, fails?: { line: string, reason: string }[] }`
-        
-- `GET /materials`
-    
-    - query: `?query=&type=&enabled=&page=&size=`
-        
-    - resp: `{ items: MaterialDTO[], total: number }`
-        
-- `PATCH /materials/{id}`
-    
-    - req: `{ enabled?: boolean, type?: string, tags?: string[] , content?: string }`
-        
-    - resp: `MaterialDTO`
-        
-
-### 3.2 Practice
-
-- `POST /sessions`
-    
-    - req: `{ batchSize: number, generatorMode: "hybrid"|"llm"|"db_only" }`
-        
-    - resp: `{ sessionId: string, questions: QuestionDTO[] }`
-        
-- `POST /answers`
-    
-    - req: `{ questionId: string, userAnswer: string, timeSpentMs?: number }`
-        
-    - resp: `GradingDTO`
-        
-- `POST /sessions/{sessionId}/next`
-    
-    - resp: `{ questions: QuestionDTO[] }`
-        
-
-### 3.3 Stats
-
-- `GET /stats/overview`
-    
-    - resp: `{ todayDone:number, todayAvgScore:number, todayAccuracy:number, dueCount:number }`
-        
-- `GET /stats/error-types?range=7d|30d`
-    
-    - resp: `{ items: { errorType:string, count:number, lastSeenAt:string }[] }`
-        
-
----
-
-## 4. DTO（前端类型定义）
-
-export type MaterialDTO = {  
-  id: string;  
-  type: "sentence"|"phrase"|"word"|"auto";  
-  content: string;  
-  tags: string[];  
-  enabled: boolean;  
-  createdAt: string;  
-};  
   
-export type QuestionDTO = {  
-  id: string;  
-  sessionId: string;  
-  materialId?: string;  
-  type: "rewrite"|"correct"|"translate"|"cloze"|"compose";  
-  prompt: string;  
-  referenceAnswer?: string[]; // optional for UI  
-  difficulty?: number;  
-  targetErrorTypes?: string[];  
-};  
+这个项目已经不再是一次性的纠错工具，而是围绕“用户自有学习材料 + 自适应练习”构建的学习工作台。
+
+当前预期的产品流程如下：
+
+1. 用户注册并登录。
+
+2. 用户连接一个或多个常见 LLM 提供商，例如 OpenAI、DeepSeek、Qwen、Gemini、Kimi、GLM、Grok 或 MiniMax。
+
+3. 用户从 YouTube 链接、文章链接或纯文本导入学习材料。
+
+4. 后端保存材料，在可用时下载 YouTube 英文字幕和 mp3，并将内容拆分为学习单元。
+
+5. 系统每天生成大约 30 分钟的聚焦练习包。
+
+6. 每次答题后，系统记录分数、错误类型、耗时、犹豫和跳过行为，用于优化后续学习安排。
+
+## 主要页面与能力
+
+### 认证
+
+- 登录
+
+- 注册
+
+- 新用户在设置页内完成引导流程
+### Today
+
+
+- 首页是每日学习指挥台
+
+- 展示当前学习重点、预计练习时长、准备状态、最近课程，以及开始练习的主按钮
+
   
-export type GradingDTO = {  
-  score: number;  
-  isCorrect: boolean;  
-  correctedAnswer: string;  
-  errorTypes: string[];  
-  explanationZh: string;  
-  suggestions: string[];  
-  confidence?: number;  
-  rawText?: string; // fallback  
-};
 
----
+### Materials
 
-## 5. 前端验收标准（MVP）
+  
 
-1. 能导入多行素材并在列表看到
-    
-2. 能开始练习并拿到 10 题
-    
-3. 每题提交后展示 score/纠正句/error types/中文解释/建议
-    
-4. 做完一批后可点击“下一批”继续
-    
-5. 统计页能显示今日数据与错误类型 Top
+- 从 YouTube URL 导入
+
+- 从文章 URL 导入
+
+- 从纯文本导入
+
+- 查看 lesson 详情并管理 study units
+
+  
+
+### Practice
+
+  
+
+- 开始每日练习或额外练习
+
+- 回答基于用户材料生成的任务
+
+- 查看分数、反馈和错误类型
+
+- 持续完成整场 session
+
+  
+
+### Stats
+
+  
+
+- 连续学习天数
+
+- 练习时长
+
+- 平均分
+
+- 错误类型趋势
+
+  
+
+### Settings
+
+  
+
+- 个人资料与每日学习目标
+
+- 后端基础 URL 覆盖
+
+- LLM 提供商配置与连通性测试
+
+  
+
+## 技术栈
+
+  
+
+- React 19
+
+- TypeScript
+
+- Vite
+
+- Material UI
+
+- React Router
+
+  
+
+## 目录结构
+
+  
+
+```text
+
+src/
+
+  features/
+
+    auth/
+
+    home/
+
+    materials/
+
+    practice/
+
+    settings/
+
+    stats/
+
+  shared/
+
+    api/
+
+    config/
+
+    ui/
+
+  types/
+
+```
+
+  
+
+## 前后端职责划分
+
+  
+
+前端主要负责：
+
+  
+
+- 产品流程与新手引导
+
+- 会话状态与用户反馈体验
+
+- lesson、study unit、stats 的展示
+
+- LLM 配置管理交互
+
+  
+
+后端主要负责：
+
+  
+
+- 身份认证
+
+- 学习材料导入与持久化
+
+- YouTube 字幕与音频处理
+
+- 文章正文提取
+
+- 每日计划计算
+
+- 自适应任务生成
+
+- 评分与统计聚合
+
+  
+
+## 本地开发
+
+  
+
+### 环境要求
+
+  
+
+- Node.js 20+
+
+- npm
+
+  
+
+### 安装与启动
+
+  
+
+```bash
+
+npm install
+
+npm run dev
+
+```
+
+  
+
+默认开发地址：
+
+  
+
+```text
+
+http://localhost:5173
+
+```
+
+  
+
+### 常用脚本
+
+  
+
+```bash
+
+npm run build
+
+npm run lint
+
+npm run preview
+
+```
+
+  
+
+### 后端 API 地址
+
+  
+
+应用默认从 `VITE_API_BASE_URL` 读取 API Base URL，用户也可以在 Settings 中手动覆盖。
+
+  
+
+示例：
+
+  
+
+```text
+
+VITE_API_BASE_URL=http://127.0.0.1:8080
+
+```
+
+  
+
+## Docker 部署
+
+  
+
+仓库中已经包含：
+
+  
+
+- `Dockerfile`
+
+- `docker-compose.yml`
+
+- `nginx/default.conf`
+
+  
+
+启动方式：
+
+  
+
+```bash
+
+docker compose up -d --build
+
+```
+
+  
+
+默认情况下，容器会在 `8088` 端口暴露前端服务。
+
+  
+
+## 当前重构重点
+
+  
+
+当前这轮重构主要聚焦于：
+
+  
+
+- 更清晰的 onboarding 流程
+
+- 从 demo 流程转向用户自有材料
+
+- 从泛化练习转向每日 30 分钟自适应练习
+
+- 从单一全局模型转向按用户管理 LLM 设置
+
+- 更统一的产品文案和交互语言
