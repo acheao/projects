@@ -2,6 +2,6 @@
 - minimax  29元
 - chatgpt 代充 若干
 - deepseek api （50元）
-- Token Plan 99 （暂时不买，手上有的用完再说）
+- Token Plan 99 （暂时不买，手上的用完再说）
 - 亚马逊云 7美元 50元
 - giffgaff 10欧 100元
