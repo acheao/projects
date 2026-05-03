@@ -1,7 +1,16 @@
-- chatgpt  20美元 140元
-- minimax  29元
-- chatgpt 代充 若干
-- deepseek api （50元）
-- Token Plan 99 （暂时不买，手上的用完再说）
-- 亚马逊云 7美元 50元
-- giffgaff 10欧 100元
+
+| 厂商       | 套餐         | 方式  | 价格     |
+| -------- | ---------- | --- | ------ |
+| chatgpt  | plus       | 月付  | 140    |
+| minimax  | Starter    | 月付  | 29     |
+| 腾讯       | token plan | 月付  | 99     |
+| Amazon   | lightsail  | 月付  | 50     |
+| 智谱       | lite       | 月付  | ~~49~~ |
+| 总计       |            | 月付  | 318    |
+| chatgpt  | plus       | 代充  |        |
+| deepseek | api        | 充值  | 50     |
+| giffgaff | 0月租        | 充值  | 100    |
+| 总计       | 充值         |     | 150    |
+
+
+
